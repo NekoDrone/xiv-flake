@@ -231,7 +231,7 @@ one of “link”, “copy”
 
 
 
-ReShade presets by name; a path or inline ini text\.
+ReShade presets by name: a file (path literal, derivation, or file inside a store path) or inline ini text\.
 
 
 
