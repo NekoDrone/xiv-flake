@@ -19,11 +19,11 @@ let
       ''
         if [ -d ${shaders} ]; then
           mkdir -p "$out/Shaders/"${dir}
-          cp -rsn ${shaders}/. "$out/Shaders/"${dir}/
+          cp -rsn --no-preserve=mode ${shaders}/. "$out/Shaders/"${dir}/
         fi
         if [ -d ${textures} ]; then
           mkdir -p "$out/Textures/"${dir}
-          cp -rsn ${textures}/. "$out/Textures/"${dir}/
+          cp -rsn --no-preserve=mode ${textures}/. "$out/Textures/"${dir}/
         fi
       ''
     ) cfg.shaders}
