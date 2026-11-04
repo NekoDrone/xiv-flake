@@ -40,6 +40,21 @@ let
     EffectSearchPaths=.\reshade-shaders\Shaders\**
     TextureSearchPaths=.\reshade-shaders\Textures\**
   '';
+
+  presetType =
+    lib.types.either
+      # path literals (./foo.ini) or derivations (e.g. a fetched preset)
+      (lib.types.addCheck lib.types.path (v: builtins.isPath v || lib.isDerivation v))
+      lib.types.lines;
+
+  presetFile = name: v: if lib.isString v then pkgs.writeText "${name}.ini" v else v;
+
+  presetTree = pkgs.linkFarm "reshade-presets" (
+    lib.mapAttrsToList (name: v: {
+      name = "${lib.removeSuffix ".ini" name}.ini";
+      path = presetFile name v;
+    }) rs.presets
+  );
 in
 {
   options.programs.xivlauncher = {
@@ -88,6 +103,24 @@ in
         default = [ ];
       };
 
+      presets = lib.mkOption {
+        type = lib.types.attrsOf presetType;
+        default = { };
+        description = "ReShade presets by name; a path or inline ini text.";
+      };
+
+      presetMode = lib.mkOption {
+        type = lib.types.enum [
+          "link"
+          "copy"
+        ];
+        default = "link";
+        description = ''
+          link: presets are read-only and fully managed (in-game changes won't save).
+          copy: presets are seeded once and stay editable in-game.
+        '';
+      };
+
       # require user to go grab it on their own so we're not redistributing anything
       # realistically, the user should probably setup some sort of install script
       # to ensure the right d3dcompiler is on their system
@@ -121,13 +154,41 @@ in
             assertion = !dc.enable || dc.hash != null;
             message = "programs.xivlauncher.game.reshade.d3dcompiler.hash must be set when d3dcompiler is enabled.";
           }
-        ];
+        ]
+        ++ lib.mapAttrsToList (name: _: {
+          assertion = builtins.match "[A-Za-z0-9._ -]+" name != null;
+          message = "reshade preset name '${name}' must be a plain file name";
+        }) rs.presets;
 
         home.activation.xivlauncherReshade = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
           game=${lib.escapeShellArg rs.gamePath}
           dll="$game/${rs.proxyDll}.dll"
 
           if [ -d "$game" ]; then
+          ${lib.optionalString (rs.presets != { }) (
+            ''
+              presets="$game/reshade-presets"
+            ''
+            + (
+              if rs.presetMode == "link" then
+                ''
+                  if [ -e "$presets" ] && [ ! -L "$presets" ]; then
+                    echo "reshade: $presets is a real directory, not replacing it" >&2
+                  else
+                    run ln -sfn ${presetTree} "$presets"
+                  fi
+                ''
+              else
+                ''
+                  if [ -L "$presets" ]; then run rm "$presets"; fi
+                  run mkdir -p "$presets"
+                  for f in ${presetTree}/*; do
+                    [ -e "$f" ] || continue
+                    [ -e "$presets/$(basename "$f")" ] || run install -m644 "$f" "$presets/"
+                  done
+                ''
+            )
+          )}
             if [ -e "$dll" ] && [ ! -L "$dll" ]; then
               echo "reshade: $dll is a real file (another mod?), leaving it alone" >&2
             else
