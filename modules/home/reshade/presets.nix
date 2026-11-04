@@ -7,13 +7,16 @@
 let
   cfg = config.programs.xivlauncher.game.reshade;
 
-  presetType =
-    lib.types.either
-      # path literals (./foo.ini) or derivations (e.g. a fetched preset)
-      (lib.types.addCheck lib.types.path (v: builtins.isPath v || lib.isDerivation v))
-      lib.types.lines;
+  isStorePathString = v: lib.isString v && lib.hasPrefix "${builtins.storeDir}/" v;
 
-  presetFile = name: v: if lib.isString v then pkgs.writeText "${name}.ini" v else v;
+  isFileRef = v: builtins.isPath v || lib.isDerivation v || isStorePathString v;
+
+  isBarePathString =
+    v: lib.isString v && !isStorePathString v && builtins.match "(~|\\.{1,2})?/[^\n]*" v != null;
+
+  presetType = lib.types.either (lib.types.addCheck lib.types.path isFileRef) lib.types.lines;
+
+  presetFile = name: v: if isFileRef v then v else pkgs.writeText "${name}.ini" v;
 
   presetTree = pkgs.linkFarm "reshade-presets" (
     lib.mapAttrsToList (name: v: {
@@ -46,7 +49,7 @@ in
     presets = lib.mkOption {
       type = lib.types.attrsOf presetType;
       default = { };
-      description = "ReShade presets by name; a path or inline ini text.";
+      description = "ReShade presets by name: a file (path literal, derivation, or file inside a store path) or inline ini text.";
     };
 
     presetMode = lib.mkOption {
@@ -63,10 +66,22 @@ in
   };
 
   config = lib.mkIf (config.programs.xivlauncher.enable && cfg.enable) {
-    assertions = lib.mapAttrsToList (name: _: {
-      assertion = builtins.match "[A-Za-z0-9._ -]+" name != null;
-      message = "reshade preset name '${name}' must be a plain file name";
-    }) cfg.presets;
+    assertions = lib.concatLists (
+      lib.mapAttrsToList (name: v: [
+        {
+          assertion = builtins.match "[A-Za-z0-9._ -]+" name != null;
+          message = "reshade preset name '${name}' must be a plain file name";
+        }
+        {
+          assertion = !isBarePathString v;
+          message = ''
+            reshade preset '${name}' is the string "${v}", which looks like a path but isn't one Nix can read.
+            Use a path literal without quotes (./foo.ini), a fetcher (pkgs.fetchurl), or a file inside a
+            fetched source ("''${src}/foo.ini").
+          '';
+        }
+      ]) cfg.presets
+    );
 
     home.activation.xivlauncherReshadePresets = lib.mkIf (cfg.presets != { }) (
       lib.hm.dag.entryAfter [ "xivlauncherReshade" ] ''
