@@ -26,6 +26,7 @@ in
     prefixPath = lib.mkOption {
       type = lib.types.str;
       default = "${config.home.homeDirectory}/.xlcore/wineprefix";
+      defaultText = lib.literalExpression ''"''${config.home.homeDirectory}/.xlcore/wineprefix"'';
       description = "XIVLauncher's Wine prefix.";
     };
   };

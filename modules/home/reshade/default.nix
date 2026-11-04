@@ -37,6 +37,7 @@ in
     gamePath = lib.mkOption {
       type = lib.types.str;
       default = "${config.home.homeDirectory}/.xlcore/ffxiv/game";
+      defaultText = lib.literalExpression ''"''${config.home.homeDirectory}/.xlcore/ffxiv/game"'';
       description = "Directory containing ffxiv_dx11.exe.";
     };
   };

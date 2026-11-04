@@ -34,7 +34,10 @@ in
     type = lib.types.listOf (
       lib.types.submodule {
         options = {
-          src = lib.mkOption { type = lib.types.package; };
+          src = lib.mkOption {
+            type = lib.types.package;
+            description = "Source tree containing the shaders, e.g. a `fetchFromGitHub` result.";
+          };
           installDir = lib.mkOption {
             type = lib.types.str;
             default = "";
@@ -43,15 +46,22 @@ in
           shaderDir = lib.mkOption {
             type = lib.types.str;
             default = "Shaders";
+            description = "Directory within `src` that holds the shader files.";
           };
           textureDir = lib.mkOption {
             type = lib.types.str;
             default = "Textures";
+            description = "Directory within `src` that holds the textures.";
           };
         };
       }
     );
     default = [ ];
+    description = ''
+      Shader repositories to install. Each entry's shaders and textures are
+      symlinked into `reshade-shaders/Shaders/<installDir>` and
+      `reshade-shaders/Textures/<installDir>` in the game directory.
+    '';
   };
 
   config = lib.mkIf (config.programs.xivlauncher.enable && cfg.enable) {
