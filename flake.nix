@@ -10,11 +10,11 @@
     in
     {
       packages = forAll (pkgs: {
-        reshade-setup = pkgs.callPackage ./pkgs/reshade-setup.nix { };
+        reshade = pkgs.callPackage ./pkgs/reshade.nix { };
       });
 
       overlays.default = final: _: {
-        xivlauncher-reshade-setup = final.callPackage ./pkgs/reshade-setup.nix { };
+        xivlauncher-reshade = final.callPackage ./pkgs/reshade.nix { };
       };
 
       homeManagerModules.default = import ./modules/home.nix self;
