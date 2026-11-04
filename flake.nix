@@ -17,7 +17,7 @@
         xivlauncher-reshade = final.callPackage ./pkgs/reshade.nix { };
       };
 
-      homeManagerModules.default = import ./modules/home.nix self;
+      homeManagerModules.default = import ./modules/home self;
       nixosModules.default = import ./modules/nixos.nix self;
     };
 
