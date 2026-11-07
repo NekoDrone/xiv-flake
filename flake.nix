@@ -67,6 +67,8 @@
 
       overlays.default = final: _: {
         xivlauncher-reshade = final.callPackage ./pkgs/reshade.nix { };
+        # requires unfree 
+        xivlauncher-d3dcompiler-url = final.callPackage ./pkgs/d3d-url.nix { };
       };
 
       homeManagerModules.default = import ./modules/home self;

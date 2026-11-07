@@ -122,11 +122,49 @@ true
 
 
 
+### programs\.xivlauncher\.game\.reshade\.d3dcompiler\.package
+
+
+
+A derivation whose output is the d3dcompiler_47\.dll file itself\.
+
+When ` null `, the DLL you added to the Nix store yourself is used
+(see ` hash `)\. Set this to ` pkgs.xivlauncher-d3dcompiler-url `
+(from this flake’s overlay, unfree) to have Nix fetch it from
+Microsoft instead\.
+
+
+
+*Type:*
+null or package
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+
+
+*Example:*
+
+```nix
+pkgs.xivlauncher-d3dcompiler-url
+```
+
+*Declared by:*
+ - [modules/home/reshade/d3dcompiler\.nix](https://github.com/NekoDrone/xiv-flake/blob/main/modules/home/reshade/d3dcompiler.nix)
+
+
+
 ### programs\.xivlauncher\.game\.reshade\.d3dcompiler\.hash
 
 
 
-Hash of your d3dcompiler_47\.dll (from ` nix hash file `)\.
+Hash of the d3dcompiler_47\.dll you added to the Nix store yourself
+(from ` nix hash file `)\. Ignored when ` package ` is set\.
 
 
 

@@ -38,58 +38,13 @@ The exact .dll that we need is `d3dcompiler_47.dll`. This is a proprietary Micro
 
 The bad news here is that we as a project cannot redistribute this library in any way without facing legal repercussions.
 
-The good news is that we can tell you how to get it yourself so that it's available in the system when you're attempting to enable ReShade support.
+The good news is that we can tell you how to get it yourself, or have your own machine fetch it straight from Microsoft, so that it's available in the system when you're attempting to enable ReShade support.
 
 ## `d3dcompiler_47.dll`
 
-The first step to enabling ReShade support on the system is to download this library, and putting it into the Nix store.
+Before ReShade can use Microsoft's compiler, `d3dcompiler_47.dll` needs to be in your Nix store, and the module needs to know about it. There are a couple of ways to go about that, so it has its own doc. Please see [Obtaining `d3dcompiler_47.dll`](./obtaining-d3dcompiler.md).
 
-To do so, run `nix shell nixpkgs#winetricks nixpkgs#wineWowPackages.stable nixpkgs#file` in a terminal session to get `winetricks`. This is how you'll actually grab the .dll from Microsoft. Do note that this can take a while if you're on nixpkgs unstable.
-
-Next, run this.
-
-```sh
-export WINEPREFIX=$(mktemp -d)
-winetricks -q d3dcompiler_47
-cp "$WINEPREFIX/drive_c/windows/system32/d3dcompiler_47.dll" .
-file d3dcompiler_47.dll    # must say PE32+ ... x86-64
-```
-
-The above tells wine to grab the wanted library, and installs it into a temporary Wine prefix at your current directory.
-
-Finally, add it to the Nix store.
-
-```sh
-nix-store --add-fixed sha256 d3dcompiler_47.dll
-nix hash file d3dcompiler_47.dll
-```
-
-You should now also have the hash for the desired `d3dcompiler_47.dll`. Hold on to this hash.
-
-## Enabling Options
-
-Now, we need to actually enable ReShade and tell Nix to set it up for us appropriately. To do so, you'll need something like this.
-
-```nix
-# home/xivlauncher.nix
-{ inputs, pkgs, ... }:
-{
-
-  imports = [ inputs.xiv-flake.homeManagerModules.default ];
-  programs.xivlauncher = {
-    enable = true;
-    game = {
-      reshade = {
-        enable = true;
-        d3dcompiler = {
-          enable = true;
-          hash = "sha256-AAAA...";
-        };
-      };
-    };
-  };
-}
-```
+## Checking It Works
 
 At this point, it would be wise to rebuild your system config and launch XIV to ensure that ReShade loads in properly.
 

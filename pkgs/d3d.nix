@@ -21,12 +21,16 @@ requireFile {
   message = ''
     d3dcompiler_47.dll (64-bit) is not in the Nix store.
 
-    Get it with winetricks in a throwaway prefix:
-      export WINEPREFIX=$(mktemp -d)
-      winetricks -q d3dcompiler_47
-      cp "$WINEPREFIX/drive_c/windows/system32/d3dcompiler_47.dll" .
+    Don't use `winetricks d3dcompiler_47` to get it: it currently installs
+    an outdated 2013 build that fails to compile many shaders. See the open
+    winetricks issue for where to get an up-to-date 64-bit DLL:
+      https://github.com/Winetricks/winetricks/issues/2522
 
     Then add it:
       nix-store --add-fixed sha256 d3dcompiler_47.dll
+
+    Alternatively, let Nix fetch it for you by setting
+    programs.xivlauncher.game.reshade.d3dcompiler.package
+    to pkgs.xivlauncher-d3dcompiler-url (see docs/obtaining-d3dcompiler.md).
   '';
 }
